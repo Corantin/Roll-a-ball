@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class CameraController : MonoBehaviour {
+public class CameraController : MonoBehaviour
+{
 
 	public GameObject player;
 	private Vector3 offset;
@@ -14,6 +15,7 @@ public class CameraController : MonoBehaviour {
 	// Update is called once per frame
 	void LateUpdate()
 	{
-		transform.position = player.transform.position + offset;
+		if (player.GetComponent<Rigidbody>().detectCollisions)
+			transform.position = player.transform.position + offset;
 	}
 }

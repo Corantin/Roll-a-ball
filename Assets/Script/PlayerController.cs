@@ -8,8 +8,11 @@ public class PlayerController : MonoBehaviour
 	public float speed;
 	public GUIText countText;
 	public GUIText finalText;
+	public GameObject Hearth;
+
 	private int count;
 	private Rigidbody myRigidBody;
+	private bool gameOver;
 
 	private IEnumerator ResetAfterSeconds(int seconds)
 	{
@@ -26,38 +29,65 @@ public class PlayerController : MonoBehaviour
 	{
 		myRigidBody = GetComponent<Rigidbody>();
 		count = 0;
+		gameOver = false;
 		finalText.text = "";
 	}
 
 	// Update is called once per frame
 	void FixedUpdate()
 	{
-		float moveHorizontal = Input.GetAxis("Horizontal");
-		float moveVertical = Input.GetAxis("Vertical");
+		if (!gameOver)
+		{
+			float moveHorizontal = Input.GetAxis("Horizontal");
+			float moveVertical = Input.GetAxis("Vertical");
 
-		Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-		myRigidBody.AddForce(movement * speed * Time.deltaTime);
+			Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
+			myRigidBody.AddForce(movement * speed * Time.deltaTime);
 
-		if (Input.GetKeyDown(KeyCode.R))
-			ResetGame();
+			if (Input.GetKeyDown(KeyCode.R))
+				ResetGame();
+		}
+	}
+
+	void LateUpdate()
+	{
+		Hearth.transform.position = transform.position;
 	}
 
 	void OnTriggerEnter(Collider other)
 	{
-        if (other.gameObject.tag == "Pickup")
+		if (other.tag == "Pickup")
 		{
 			other.gameObject.SetActive(false);
 
-			other.GetComponent<Renderer>().material.color
-				= GetComponent<Renderer>().material.color;
+			Hearth.GetComponent<Renderer>().material.color
+				= other.GetComponent<Renderer>().material.color;
 
 			count++;
 			SetCountText();
+		}		
+	}
+
+	void OnCollisionEnter(Collision other)
+	{
+		if (other.gameObject.tag == "Enemy")
+		{
+			gameOver = true;
+			myRigidBody.velocity = Vector3.zero;
+			StartCoroutine(ResetAfterSeconds(5));
 		}
 		else if (other.gameObject.tag == "BlackHole")
 		{
+			Vector3 heading = other.transform.position - transform.position;
+			float distance = heading.magnitude;
+			Vector3 direction = heading / distance / 2;
+
+			gameOver = true;
+			myRigidBody.velocity = Vector3.zero;
+			transform.position = Vector3.Slerp(transform.position, other.transform.position, 20 * Time.deltaTime);
+			
+			myRigidBody.detectCollisions = false;
 			StartCoroutine(ResetAfterSeconds(5));
-			Time.timeScale = 0f;
 		}
 	}
 
